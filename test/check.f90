@@ -14,8 +14,10 @@ program check
   type(csv_parser) :: p
   integer(kind=c_signed_char) :: options
   type(counts), target :: c
-  integer(kind=c_size_t) r, s, ln
+  integer(kind=c_size_t) ln
   character(len=:), allocatable :: input
+  character(len=2), parameter :: crlf = achar(13) // achar(10)
+
 
   ! character(len=:), allocatable :: fin, fout
   ! integer :: nargs, arglen, iostat, u, pos
@@ -30,7 +32,8 @@ program check
 
   options = 0
   c = counts()
-  input = "1, 22, 333" // new_line('a') // "4444, 55555, 666666" // new_line('a') // "7777777, 88888888, 999999999"
+  ! input = "1, 22, 333" // new_line('a') // "4444, 55555, 666666" // new_line('a') // "7777777, 88888888, 999999999"
+  input = "1, 22, 333" // crlf // "4444, 55555, 666666" // crlf // "7777777, 88888888, 999999999"
   ln = len(input)
 
   if(csv_init(p, options).ne.0) error stop "failed to init csv parser"
@@ -40,12 +43,10 @@ program check
     error stop "aborting"
   endif
 
-  s = csv_fini(p, c_funloc(cb1), c_funloc(cb2), c_loc(c))
+  if(csv_fini(p, c_funloc(cb1), c_funloc(cb2), c_loc(c)).ne.0) error stop "failed to finalize parseing"
 
   call csv_free(p)
 
-  write(stdout, '(a, i0)'), "     r: ", r
-  write(stdout, '(a, i0)'), "     s: ", s
   write(stdout, '(a, i0)'), "fields: ", c%fields
   write(stdout, '(a, i0)'), "  rows: ", c%rows
 
@@ -68,11 +69,12 @@ program check
     end subroutine cb1
 
     subroutine cb2(c2, p2)
-      integer(kind=c_signed_char) :: c2
+      integer(kind=c_signed_char), value :: c2
       type(c_ptr), value :: p2
       type(counts), pointer :: cp2
       call c_f_pointer(p2, cp2)
       cp2%rows = cp2%rows + 1
+      write(stdout, *), "    c2: ", c2
     end subroutine
 
 end program check
