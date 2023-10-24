@@ -89,7 +89,7 @@ program check
       type(counts), pointer :: cp
       call c_f_pointer(c, cc)
       call c_f_pointer(p, cp)
-      cc => cc(1:n)
+      cc => cc(1:n) ! FIXME: only works for gfortran
       cp%fields = cp%fields + 1
       write(stdout, '(a, i0)') "     n: ", n
       write(stdout, '(2a)')    "   val: ", cc
@@ -101,7 +101,7 @@ program check
       type(counts), pointer :: cp
       call c_f_pointer(p, cp)
       cp%rows = cp%rows + 1
-      write(stdout, *) "    c: ", c
+      write(stdout, *) "    c: ", c ! FIXME: format specifier
     end subroutine
 
     function is_space(c) result(ret)
